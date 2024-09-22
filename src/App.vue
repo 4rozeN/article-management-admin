@@ -9,6 +9,7 @@ const login = () => {
 const logout = () => {
   userStore.removeToken()
 }
+const getArticleList = () => {}
 </script>
 
 <template>
@@ -21,6 +22,7 @@ const logout = () => {
   <el-button @click="totalStore.increment">加1</el-button>
   <el-button @click="totalStore.decrement">减1</el-button>
   <hr />
+  <el-button @click="getArticleList">获取文章列表</el-button>
 </template>
 
 <style scoped></style>
