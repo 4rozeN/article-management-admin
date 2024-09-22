@@ -13,6 +13,10 @@ const getArticleList = () => {}
 </script>
 
 <template>
+  <router-view></router-view>
+  <hr />
+  <hr />
+  <hr />
   <div>我是App组件</div>
   <p>{{ userStore.token }}</p>
   <el-button @click="login">登录</el-button>
