@@ -31,5 +31,10 @@ module.exports = {
     'vue/no-setup-props-destructure': ['off'], // 允许解构 setup 函数中的 props
     // 添加未定义变量错误提示，create-vue@3.6.3 关闭
     'no-undef': 'error'
+  },
+  globals: {
+    ElMessage: 'readonly',
+    ElMessageBox: 'readonly',
+    ElLoading: 'readonly'
   }
 }
