@@ -18,7 +18,7 @@ instance.interceptors.request.use(
     // 以下为jwt模式
     const useJwt = useUserJwtStore()
     if (useJwt.jwt) {
-      config.headers.Authorization = useJwt.jwt
+      config.headers.Authorization = 'Bearer ' + useJwt.jwt
     }
     return config
 

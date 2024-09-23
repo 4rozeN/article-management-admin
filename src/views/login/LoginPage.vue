@@ -58,6 +58,8 @@ const rules = {
 }
 
 const register = async () => {
+  // 清空localStorage和sessionStorage中可能存在的jwt
+  useUserJwt.removeJwt()
   await form.value.validate()
   // 说明校验通过
   await userRegisterService(formModel.value)
@@ -182,7 +184,12 @@ watch(isRegister, () => {
         <el-form-item class="flex">
           <div class="flex">
             <el-checkbox v-model="shouldRemember">记住我</el-checkbox>
-            <el-link type="primary" :underline="false">忘记密码？</el-link>
+            <el-link
+              type="primary"
+              :underline="false"
+              @click="router.push('user/password')"
+              >忘记密码？</el-link
+            >
           </div>
         </el-form-item>
         <el-form-item>
