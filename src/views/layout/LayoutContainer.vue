@@ -9,15 +9,51 @@ import {
   SwitchButton,
   CaretBottom
 } from '@element-plus/icons-vue'
-import avatar from '@/assets/default.png'
 import { onMounted, ref } from 'vue'
 import { userGetProfileService } from '@/api/user'
-
-const userName = ref('')
+import avatar from '@/assets/avatar.jpg'
+import { useUserJwtStore } from '@/stores'
+import { useRouter } from 'vue-router'
+const user = ref({})
+const imgUrl = ref('')
 onMounted(async () => {
   const res = await userGetProfileService()
-  userName.value = res.data.username
+  user.value = res.data
+  // 处理图片地址
+  imgUrl.value = 'http://localhost:1337' + user.value.avatar.url
+  // console.log(imgUrl.value)
 })
+
+const router = useRouter()
+const useStore = useUserJwtStore()
+const onCommand = async (command) => {
+  if (command === 'logout') {
+    await ElMessageBox.confirm('确认退出登录吗？', '温馨提示', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    })
+      .then(() => {
+        // 退出登录，清除jwt
+        useStore.removeJwt()
+        // 进行提示
+        ElMessage({
+          type: 'success',
+          message: '成功退出'
+        })
+        // 跳转登录页面
+        router.push('/')
+      })
+      .catch(() => {
+        ElMessage({
+          type: 'info',
+          message: '操作取消'
+        })
+      })
+  } else {
+    router.push(`/user/${command}`)
+  }
+}
 </script>
 
 <template>
@@ -74,15 +110,16 @@ onMounted(async () => {
     <el-container>
       <el-header>
         <div>
-          当前用户：<strong>{{ userName }}</strong>
+          当前用户：<strong>{{ user.username }}</strong>
         </div>
-        <el-dropdown placement="bottom-end">
+        <el-dropdown placement="bottom-end" @command="onCommand">
           <span class="el-dropdown__box">
-            <el-avatar :src="avatar" />
+            <el-avatar :src="imgUrl || avatar" />
             <el-icon>
               <CaretBottom />
             </el-icon>
           </span>
+          <!-- #dropdown为Vue3具名插槽用法，这里是下拉列表 -->
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="profile" :icon="User">基本资料</el-dropdown-item>

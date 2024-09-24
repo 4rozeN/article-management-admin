@@ -16,11 +16,7 @@ export const userForgotPasswordService = ({ email }) => {
   return request.post('/api/auth/forgot-password', { email })
 }
 
-export const userResetPasswordService = ({
-  password,
-  confirmPassword,
-  code
-}) => {
+export const userResetPasswordService = ({ password, confirmPassword, code }) => {
   const passwordConfirmation = confirmPassword
   return request.post('/api/auth/reset-password', {
     password,
@@ -30,5 +26,7 @@ export const userResetPasswordService = ({
 }
 
 export const userGetProfileService = () => {
-  return request.get('/api/users/me')
+  return request.get(
+    '/api/users/me?fields=username,email,createdAt,updatedAt,id&populate[avatar][fields]=id,height,width,name,updatedAt,ext,url'
+  )
 }
