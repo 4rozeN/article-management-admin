@@ -146,19 +146,12 @@ watch(isRegister, () => {
           ></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button
-            class="button"
-            type="primary"
-            auto-insert-space
-            @click="register()"
-          >
+          <el-button class="button" type="primary" auto-insert-space @click="register()">
             注册
           </el-button>
         </el-form-item>
         <el-form-item class="flex">
-          <el-link type="info" :underline="false" @click="isRegister = false">
-            ← 返回
-          </el-link>
+          <el-link type="info" :underline="false" @click="isRegister = false"> ← 返回 </el-link>
         </el-form-item>
       </el-form>
       <el-form :model="formModel" :rules="rules" ref="form" size="large" v-else>
@@ -184,27 +177,18 @@ watch(isRegister, () => {
         <el-form-item class="flex">
           <div class="flex">
             <el-checkbox v-model="shouldRemember">记住我</el-checkbox>
-            <el-link
-              type="primary"
-              :underline="false"
-              @click="router.push('user/password')"
+            <el-link type="primary" :underline="false" @click="router.push('/reset/password')"
               >忘记密码？</el-link
             >
           </div>
         </el-form-item>
         <el-form-item>
-          <el-button
-            @click="login()"
-            class="button"
-            type="primary"
-            auto-insert-space
+          <el-button @click="login()" class="button" type="primary" auto-insert-space
             >登录</el-button
           >
         </el-form-item>
         <el-form-item class="flex">
-          <el-link type="info" :underline="false" @click="isRegister = true">
-            注册 →
-          </el-link>
+          <el-link type="info" :underline="false" @click="isRegister = true"> 注册 → </el-link>
         </el-form-item>
       </el-form>
     </el-col>

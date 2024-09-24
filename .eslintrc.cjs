@@ -17,7 +17,7 @@ module.exports = {
       {
         singleQuote: true, // 使用单引号
         semi: false, // 结尾不使用分号
-        printWidth: 80, // 单行最大长度
+        printWidth: 100, // 单行最大长度
         trailingComma: 'none', // 结尾不使用逗号
         endOfLine: 'auto' // 自动根据操作系统换行(win和mac不一致)
       }

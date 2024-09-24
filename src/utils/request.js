@@ -19,6 +19,8 @@ instance.interceptors.request.use(
     const useJwt = useUserJwtStore()
     if (useJwt.jwt) {
       config.headers.Authorization = 'Bearer ' + useJwt.jwt
+    } else if (useJwt.sessionJwt) {
+      config.headers.Authorization = 'Bearer ' + useJwt.sessionJwt
     }
     return config
 

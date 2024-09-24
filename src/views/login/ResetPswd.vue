@@ -1,11 +1,7 @@
 <script setup>
 import { Message, Lock, Key } from '@element-plus/icons-vue'
 import { ElLoading } from 'element-plus'
-import {
-  userResetPasswordService,
-  userGetProfileService,
-  userForgotPasswordService
-} from '@/api/user'
+import { userResetPasswordService, userForgotPasswordService } from '@/api/user'
 import { useUserJwtStore } from '@/stores'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -54,7 +50,6 @@ const rules = {
 const handleSubmit = async () => {
   // 校验表单
   await form.value.validate()
-  await userGetProfileService()
   // console.log(res)
   await userForgotPasswordService(formModel.value)
   ElMessage.success('密码重置邮件已发送至邮箱，请注意查收')
@@ -106,6 +101,7 @@ const pswSubmit = async () => {
             ></el-input>
           </el-form-item>
           <el-form-item class="flex">
+            <el-link type="info" :underline="false" @click="$router.go(-1)"> ← 返回 </el-link>
             <el-button type="primary" class="button" @click="handleSubmit()">确认</el-button>
           </el-form-item>
         </el-form>
