@@ -1,9 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { getArticleList } from '@/api/article'
+import { useArticleCategoryService } from '@/api/article'
 import { onMounted } from 'vue'
 import { Edit, Delete } from '@element-plus/icons-vue'
-import { updateArticleById, deleteArticleById } from '@/api/article'
+import { updateArticleCategoryByIdService, deleteArticleCategoryByIdService } from '@/api/article'
 
 // 定义form用于接收模板引用
 const form = ref(null)
@@ -15,7 +15,7 @@ const getChannelList = async () => {
   // 发送请求前，将表格设为loading状态
   loading.value = true
   // 发送请求
-  const res = await getArticleList()
+  const res = await useArticleCategoryService()
   // 关闭loading状态
   loading.value = false
   // 处理请求结果
@@ -37,7 +37,7 @@ const onDelChannel = async (row) => {
   // 显示loading
   loading.value = true
   // 发送删除请求
-  await deleteArticleById(row.documentId)
+  await deleteArticleCategoryByIdService(row.documentId)
   // 关闭loading状态
   loading.value = false
   // 刷新列表
@@ -52,7 +52,7 @@ const handleSubmit = async () => {
   // 获取表单数据
   console.log(formModel.value)
   // 发送请求
-  await updateArticleById(formModel.value.id, formModel.value)
+  await updateArticleCategoryByIdService(formModel.value.id, formModel.value)
   // 关闭加载中
   loading.value = false
   // 关闭弹层

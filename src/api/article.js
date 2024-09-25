@@ -1,21 +1,22 @@
 import request from '@/utils/request'
 
-export const getArticleList = () => {
+// 获取文章分类列表
+export const useArticleCategoryService = () => {
   return request.get('/api/article-categories')
 }
 
 // id为documentId哦
-export const getArticleById = (id) => {
+export const useArticleCategoryByIdService = (id) => {
   return request.get(`/api/article-categories/${id}`)
 }
 
 // 接口要求传入用data包裹的含category_name和category_alias俩字段的对象
-export const addArticle = (dataObj) => {
+export const addArticleCategoryByIdService = (dataObj) => {
   return request.post('/api/article-categories', dataObj)
 }
 
 // id为documentId且为Path参数，dataObj为含有更新内容的对象
-export const updateArticleById = (id, dataObj) => {
+export const updateArticleCategoryByIdService = (id, dataObj) => {
   return request.put(`/api/article-categories/${id}`, {
     data: {
       category_name: dataObj.cate_name,
@@ -25,6 +26,8 @@ export const updateArticleById = (id, dataObj) => {
 }
 
 // id为documentId且为Path参数
-export const deleteArticleById = (id) => {
+export const deleteArticleCategoryByIdService = (id) => {
   return request.delete(`/api/article-categories/${id}`)
 }
+
+//
