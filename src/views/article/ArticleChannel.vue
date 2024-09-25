@@ -1,16 +1,16 @@
 <script setup>
-import { ref } from 'vue'
-import { useArticleCategoryService } from '@/api/article'
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useArticleCategoryService, addArticleCategoryService } from '@/api/article'
 import { Edit, Delete } from '@element-plus/icons-vue'
 import { updateArticleCategoryByIdService, deleteArticleCategoryByIdService } from '@/api/article'
 
-// 定义form用于接收模板引用
-const form = ref(null)
+const form = ref(null) // 定义form用于接收模板引用
 const direction = ref('rtl')
 const showDrawer = ref(false)
 const loading = ref(false)
 const channelList = ref([])
+const oprationType = ref('')
+
 const getChannelList = async () => {
   // 发送请求前，将表格设为loading状态
   loading.value = true
@@ -25,13 +25,22 @@ onMounted(() => {
   getChannelList()
 })
 
+const formModel = ref({
+  category_name: '',
+  category_alias: ''
+})
+const onAddChannel = () => {
+  oprationType.value = 'add'
+  showDrawer.value = true
+}
 const onEditChannel = (row) => {
   formModel.value = {
     id: row.documentId,
-    cate_name: row.category_name,
-    cate_alias: row.category_alias
+    category_name: row.category_name,
+    category_alias: row.category_alias
   }
   showDrawer.value = true
+  oprationType.value = 'update'
 }
 const onDelChannel = async (row) => {
   // 显示loading
@@ -43,16 +52,44 @@ const onDelChannel = async (row) => {
   // 刷新列表
   getChannelList()
 }
-
+const handleClose = () => {
+  ElMessageBox.confirm('您确定要关闭此弹层吗？未保存的修改可能丢失。', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(() => {
+      handleCancel()
+    })
+    .catch(() => {
+      ElMessage.info('操作取消')
+    })
+}
+const updateCategory = async () => {
+  await updateArticleCategoryByIdService(formModel.value.id, formModel.value)
+}
+const addCategory = async () => {
+  await addArticleCategoryService(formModel.value)
+}
 const handleSubmit = async () => {
   // 显示加载中
   loading.value = true
   // 预校验
   await form.value.validate()
-  // 获取表单数据
-  console.log(formModel.value)
-  // 发送请求
-  await updateArticleCategoryByIdService(formModel.value.id, formModel.value)
+  // 判断是新增还是编辑操作
+  if (oprationType.value === 'add') {
+    await addCategory()
+  } else if (oprationType.value === 'update') {
+    await updateCategory()
+  } else {
+    console.error('未知操作类型')
+    return
+  }
+  // 清空表单
+  formModel.value = {
+    cate_name: '',
+    cate_alias: ''
+  }
   // 关闭加载中
   loading.value = false
   // 关闭弹层
@@ -61,12 +98,24 @@ const handleSubmit = async () => {
   getChannelList()
 }
 
-const formModel = ref({
-  cate_name: '',
-  cate_alias: ''
-})
+const handleCancel = () => {
+  // 展示加载中效果
+  loading.value = true
+  // 清空表单
+  formModel.value = {
+    cate_name: '',
+    cate_alias: ''
+  }
+  // 重置操作类型
+  oprationType.value = ''
+  // 关闭弹层
+  showDrawer.value = false
+  // 关闭加载中效果
+  loading.value = false
+}
+
 const rules = {
-  cate_name: [
+  category_name: [
     { required: true, message: '请输入分类名称', trigger: 'blur' },
     {
       pattern: /^\S{1,10}$/,
@@ -74,7 +123,7 @@ const rules = {
       trigger: 'blur'
     }
   ],
-  cate_alias: [
+  category_alias: [
     { required: true, message: '请输入分类别名', trigger: 'blur' },
     {
       pattern: /^[a-zA-Z0-9]{1,15}$/,
@@ -88,7 +137,7 @@ const rules = {
 <template>
   <page-container title="文章分类">
     <template #extra>
-      <el-button type="primary">添加分类</el-button>
+      <el-button type="primary" @click="onAddChannel()">添加分类</el-button>
     </template>
     <el-table v-loading="loading" :data="channelList" style="width: 100%">
       <el-table-column label="序号" width="100" type="index"> </el-table-column>
@@ -117,9 +166,9 @@ const rules = {
       </template>
     </el-table>
     <!-- 定义弹层 -->
-    <el-drawer v-model="showDrawer" :direction="direction">
+    <el-drawer v-model="showDrawer" :direction="direction" :before-close="handleClose">
       <template #header>
-        <h4>编辑分类项：{{ formModel.cate_name }}</h4>
+        <h4>当前分类项为：{{ formModel.cate_name || '新增分类' }}</h4>
       </template>
       <template #default>
         <!-- 定义内容 -->
@@ -131,11 +180,11 @@ const rules = {
             label-width="100px"
             style="padding-right: 30px"
           >
-            <el-form-item label="分类名称" prop="cate_name">
-              <el-input v-model="formModel.cate_name" minlength="1" maxlength="10"></el-input>
+            <el-form-item label="分类名称" prop="category_name">
+              <el-input v-model="formModel.category_name" minlength="1" maxlength="10"></el-input>
             </el-form-item>
-            <el-form-item label="分类别名" prop="cate_alias">
-              <el-input v-model="formModel.cate_alias" minlength="1" maxlength="15"></el-input>
+            <el-form-item label="分类别名" prop="category_alias">
+              <el-input v-model="formModel.category_alias" minlength="1" maxlength="15"></el-input>
             </el-form-item>
           </el-form>
         </div>
@@ -143,7 +192,7 @@ const rules = {
       <!-- 定义footer -->
       <template #footer>
         <div style="flex: auto">
-          <el-button type="primary" @click="showDrawer = false">取消</el-button>
+          <el-button type="primary" @click="handleCancel()">取消</el-button>
           <el-button type="primary" @click="handleSubmit()">提交</el-button>
         </div>
       </template>
