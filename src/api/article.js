@@ -49,6 +49,14 @@ export const useArticleByIdService = (id) => {
   )
 }
 
+// 条件查询文章列表，支持传入包含id和state字段的obj对象
+export const useArticleByConditionService = (conditionObj) => {
+  const { id, state } = conditionObj // 从 condition 中解构出 id 和 state 字段
+  return request.get(
+    `/api/articles?filters[article_category][id][$eq]=${id}&filters[state][$eq]=${state}&populate=*`
+  )
+}
+
 // 创建新文章
 export const addArticleService = (dataObj) => {
   const {
@@ -68,30 +76,22 @@ export const addArticleService = (dataObj) => {
   }
 
   return request.post('/api/articles', {
-    data
+    data: data
   })
 }
 
 // 更新某文章,id为documentId且为Path参数，dataObj为含有更新内容的对象
 export const updateArticleByIdService = (id, dataObj) => {
-  const {
-    title, // 只提取 title 字段
-    content, // 只提取 content 字段
-    cover_img, // 只提取 cover_img 字段
-    state, // 只提取 state 字段
-    article_category // 只提取 article_category 字段
-  } = dataObj // 从 dataObj 中解构出所需字段
-
   const data = {
-    title, // 将解构后的字段重新赋值给 data 对象
-    content,
-    cover_img,
-    state,
-    article_category
+    title: dataObj.title,
+    content: dataObj.content,
+    cover_img: dataObj.cover_img,
+    state: dataObj.state,
+    article_category: dataObj.article_category
   }
 
   return request.put(`/api/articles/${id}`, {
-    data
+    data: data
   })
 }
 

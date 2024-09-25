@@ -20,7 +20,7 @@ onMounted(async () => {
   const res = await userGetProfileService()
   user.value = res.data
   // 处理图片地址
-  imgUrl.value = 'http://localhost:1337' + user.value.avatar.url
+  imgUrl.value = import.meta.env.VITE_BASE_UPLOAD_URL + user.value.avatar.url
   // console.log(imgUrl.value)
 })
 
