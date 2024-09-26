@@ -12,6 +12,7 @@ import {
 } from '@/api/article'
 import dayjs from 'dayjs' // 导入dayjs格式化日期
 import { useArticleStore } from '@/stores'
+import { useRouter } from 'vue-router'
 
 const useStore = useArticleStore()
 const baseUploadUrl = import.meta.env.VITE_BASE_UPLOAD_URL
@@ -35,6 +36,7 @@ const pageCount = ref(30) // 定义总页数
 const totalCount = ref(30) // 定义总数据条目数
 const articleList = ref([])
 const articleCategoryList = ref([])
+const router = useRouter()
 
 // 提供方法重置表单
 const resetFormModel = () => {
@@ -403,6 +405,13 @@ const handleClearDraft = () => {
     position: 'bottom-left'
   })
 }
+
+// 提供方法，用于点击文章标题时，跳转到预览页面
+const onClickTitle = (row) => {
+  // console.log('点击标题：', row)
+  // 跳转到预览页面
+  router.push({ name: 'ArticlePreview', params: { id: row.documentId } })
+}
 </script>
 
 <template>
@@ -462,7 +471,7 @@ const handleClearDraft = () => {
     <el-table v-loading="loading" :data="articleList" style="width: 100%">
       <el-table-column label="文章标题" width="350" :show-overflow-tooltip="true">
         <template #default="{ row }">
-          <el-link type="primary" :underline="false" @click="$router.push('/article/preview/${id}')"
+          <el-link type="primary" :underline="false" @click="onClickTitle(row)"
             ><el-icon> <Link /> </el-icon>{{ row.title }}</el-link
           >
         </template>
