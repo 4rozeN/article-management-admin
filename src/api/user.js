@@ -27,6 +27,12 @@ export const userResetPasswordService = ({ password, confirmPassword, code }) =>
 
 export const userGetProfileService = () => {
   return request.get(
-    '/api/users/me?fields=username,email,createdAt,updatedAt,id&populate[avatar][fields]=id,height,width,name,updatedAt,ext,url'
+    '/api/users/me?fields=username,email,blocked,telphone,createdAt,updatedAt,id&populate[avatar][fields]=id,height,width,name,updatedAt,ext,url'
   )
+}
+
+export const userProfileUpdateService = (id, dataObj) => {
+  return request.put(`/api/users/${id}`, {
+    ...dataObj
+  })
 }
