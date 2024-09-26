@@ -1,5 +1,5 @@
 <script setup>
-import { Delete, Edit, Plus, Link } from '@element-plus/icons-vue'
+import { Delete, Edit, Plus, Link, Search } from '@element-plus/icons-vue'
 import { ref, onMounted } from 'vue'
 import { useUploadService } from '@/api/upload'
 import {
@@ -16,8 +16,6 @@ import { useArticleStore } from '@/stores'
 
 const useStore = useArticleStore()
 const baseUploadUrl = import.meta.env.VITE_BASE_UPLOAD_URL
-const articleList = ref([])
-const articleCategoryList = ref([])
 const formModel = ref({
   id: '',
   title: '',
@@ -31,12 +29,27 @@ const showDrawer = ref(false)
 const direction = ref('rtl')
 const loading = ref(false)
 const form = ref(null) // 定义form用于接收模板引用进行表单提交预校验
-const srcList = ref([]) // 定义图片预览列表
+// const srcList = ref([]) // 定义图片预览列表
 const disabled = ref(false) // 定义disabled用于控制分页禁用状态
 const currentPage = ref(1) // 定义当前页数
 const pageSize = ref(10) // 定义每页显示的数量
 const pageCount = ref(30) // 定义总页数
 const totalCount = ref(30) // 定义总数据条目数
+const articleList = ref([])
+const articleCategoryList = ref([])
+
+// 将格式化代码抽离，封装为格式化函数供调用
+const formatArticleList = (articles) => {
+  return articles.map((item) => {
+    return {
+      ...item,
+      createdAt: dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss'), // 格式化日期
+      state: item.state ? '已发布' : '草稿', // 处理 state
+      cover_img: item.cover_img ? baseUploadUrl + item.cover_img.url : '' // 更新封面图片
+    }
+  })
+}
+
 // 获取文章列表，支持分页、条件查询和模糊查询
 const getArticleList = async (page, pageSize, conditionObj = {}, keyword = '') => {
   const res = await useArticleService(page, pageSize, conditionObj, keyword) // 使用新接口
@@ -47,18 +60,8 @@ const getArticleList = async (page, pageSize, conditionObj = {}, keyword = '') =
   totalCount.value = res.data.meta.pagination.total
   articleList.value = res.data.data
 
-  // 格式化日期
-  articleList.value.forEach((item) => {
-    item.createdAt = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
-  })
-  // 处理state显示，true为已发布；false为草稿
-  articleList.value.forEach((item) => {
-    item.state = item.state ? '已发布' : '草稿'
-  })
-  // 更新封面图片列表
-  srcList.value = articleList.value.map((item) => {
-    return item.cover_img ? baseUploadUrl + item.cover_img.url : ''
-  })
+  // 格式化文章列表
+  articleList.value = formatArticleList(res.data.data)
 }
 
 // 获取分类列表
@@ -84,7 +87,7 @@ const handleCurrentChange = async (page) => {
   await getArticleList(page, pageSize.value, currentCondition.value) // 使用当前条件
 }
 
-// 定义条件查询的项目
+// 条件查询的返回项
 const categoryRow = ref('')
 const stateRow = ref('')
 // 当前的查询条件
@@ -124,6 +127,32 @@ const handleReset = async () => {
     type: 'success',
     position: 'bottom-left'
   })
+}
+
+// 定义模糊查询的输入框
+const inputQuery = ref('')
+// 模糊搜索的响应事件
+const handleQueryByTitle = async () => {
+  // 对输入的内容进行正则校验，是否存在非法字符
+  const reg = /^[a-zA-Z0-9\u4e00-\u9fa5\s]+$/
+  if (!reg.test(inputQuery.value)) {
+    ElMessage.error('搜索内容为空或包含非法字符，请重新输入！')
+    return
+  }
+  // 调用接口查询
+  await getArticleList(1, 10, {}, inputQuery.value)
+    .then(() => {
+      // 查询成功
+      ElNotification({
+        title: 'Success',
+        message: '搜索成功',
+        type: 'success',
+        position: 'bottom-left'
+      })
+    })
+    .catch((err) => {
+      ElMessage.error('查询失败：' + err)
+    })
 }
 
 // 编辑文章的响应事件
@@ -387,7 +416,10 @@ const handleClearDraft = () => {
       <el-button type="primary" @click="onAddArticle()">发布文章</el-button>
     </template>
     <!-- 定义表头操作项 -->
-    <el-form inline>
+    <el-form
+      inline
+      style="display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center"
+    >
       <el-form-item label="文章分类：">
         <el-select
           v-model="categoryRow"
@@ -417,6 +449,18 @@ const handleClearDraft = () => {
       <el-form-item>
         <el-button type="primary" @click="handleQuery()">查询</el-button>
         <el-button @click="handleReset()">重置</el-button>
+      </el-form-item>
+      <el-form-item label="搜索文章：" style="margin-left: auto; margin-right: 0%">
+        <el-input
+          v-model="inputQuery"
+          @keyup.enter="handleQueryByTitle()"
+          maxlength="10"
+          show-word-limit
+          type="text"
+          style="width: 240px"
+          placeholder="按标题搜文章"
+          :prefix-icon="Search"
+        />
       </el-form-item>
     </el-form>
     <!-- 定义主体表格内容 -->
@@ -501,7 +545,7 @@ const handleClearDraft = () => {
       </template>
     </el-table>
     <!-- 分页组件 -->
-    <div class="pagination">
+    <div class="pagination" style="display: flex; justify-content: center; margin-top: 20px">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
@@ -514,6 +558,10 @@ const handleClearDraft = () => {
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
+    </div>
+    <!-- 回到顶部组件 -->
+    <div class="back-to-top">
+      <el-backtop :visibility-height="100" :right="100" :bottom="100" />
     </div>
     <!-- 定义弹层 -->
     <el-drawer
