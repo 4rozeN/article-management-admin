@@ -70,6 +70,8 @@ export const useArticleService = (page, limit, conditionObj = {}, keyword = '') 
   query += `&fields=documentId,title,content,state,createdAt,updatedAt,publishedAt`
   query += `&populate[cover_img][fields]=documentId,name,alternativeText,caption,width,height,ext,mime,url,createdAt,updatedAt`
   query += `&populate[article_category][fields]=documentId,category_name,category_alias,createdAt,updatedAt`
+  // 加入 sort 参数，按更新时间进行排序
+  query += `&sort=updatedAt:desc`
 
   // 发起请求
   return request.get(query)

@@ -1,4 +1,5 @@
 <script setup>
+import richEditor from '@/components/richEditor.vue'
 import { Delete, Edit, Plus, Link, Search } from '@element-plus/icons-vue'
 import { ref, onMounted } from 'vue'
 import { useUploadService } from '@/api/upload'
@@ -10,8 +11,6 @@ import {
   addArticleService
 } from '@/api/article'
 import dayjs from 'dayjs' // 导入dayjs格式化日期
-import { QuillEditor } from '@vueup/vue-quill'
-import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import { useArticleStore } from '@/stores'
 
 const useStore = useArticleStore()
@@ -29,7 +28,6 @@ const showDrawer = ref(false)
 const direction = ref('rtl')
 const loading = ref(false)
 const form = ref(null) // 定义form用于接收模板引用进行表单提交预校验
-// const srcList = ref([]) // 定义图片预览列表
 const disabled = ref(false) // 定义disabled用于控制分页禁用状态
 const currentPage = ref(1) // 定义当前页数
 const pageSize = ref(10) // 定义每页显示的数量
@@ -38,14 +36,29 @@ const totalCount = ref(30) // 定义总数据条目数
 const articleList = ref([])
 const articleCategoryList = ref([])
 
+// 提供方法重置表单
+const resetFormModel = () => {
+  // 直接重置 formModel 的内容
+  formModel.value = {
+    title: '',
+    content: '',
+    cover_img: '',
+    state: false,
+    article_category: null
+  }
+}
+
 // 将格式化代码抽离，封装为格式化函数供调用
 const formatArticleList = (articles) => {
   return articles.map((item) => {
     return {
       ...item,
-      createdAt: dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss'), // 格式化日期
+      // 格式化日期
+      createdAt: dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss'),
+      updatedAt: dayjs(item.updatedAt).format('YYYY-MM-DD HH:mm:ss'),
       state: item.state ? '已发布' : '草稿', // 处理 state
-      cover_img: item.cover_img ? baseUploadUrl + item.cover_img.url : '' // 更新封面图片
+      // 更新封面图片
+      cover_img: item.cover_img ? baseUploadUrl + item.cover_img.url : ''
     }
   })
 }
@@ -53,7 +66,7 @@ const formatArticleList = (articles) => {
 // 获取文章列表，支持分页、条件查询和模糊查询
 const getArticleList = async (page, pageSize, conditionObj = {}, keyword = '') => {
   const res = await useArticleService(page, pageSize, conditionObj, keyword) // 使用新接口
-  console.log('查询结果:', res)
+  // console.log('查询结果:', res)
 
   currentPage.value = res.data.meta.pagination.page
   pageCount.value = res.data.meta.pagination.pageCount
@@ -62,6 +75,7 @@ const getArticleList = async (page, pageSize, conditionObj = {}, keyword = '') =
 
   // 格式化文章列表
   articleList.value = formatArticleList(res.data.data)
+  // console.log('格式化后的文章列表:', articleList.value)
 }
 
 // 获取分类列表
@@ -168,14 +182,14 @@ const onEditArticle = (row) => {
     state: row.state,
     article_category: row.article_category.id // 该id非documentId而是真实id
   }
-  if (!row.cover_img) {
-    formModel.value.cover_img = ''
+  if (row.cover_img) {
+    // console.log('row.cover_img：', row.cover_img)
+    formModel.value.cover_img = row.cover_img
     // 设置预览图
-    preImgUrl.value = ''
+    preImgUrl.value = row.cover_img
   } else {
-    ;(formModel.value.cover_img = row.cover_img.id),
-      // 设置预览图
-      (preImgUrl.value = baseUploadUrl + row.cover_img.url)
+    // 没有封面图，清空预览图
+    preImgUrl.value = ''
   }
   // 打开弹层
   showDrawer.value = true
@@ -205,8 +219,9 @@ const rules = {
   ],
   cover_img: [{ required: true, message: '请上传文章封面图', trigger: 'blur' }],
   state: [{ required: true, message: '请选择文章状态', trigger: 'change' }],
-  article_category: [{ required: true, message: '请选择文章分类', trigger: 'change' }]
+  article_category: [{ required: true, message: '请选择文章分类', trigger: 'blur' }]
 }
+// 处理弹层关闭事件
 const handleClose = () => {
   ElMessageBox.confirm('您确定要关闭此弹层吗？未保存的修改可能丢失。', '提示', {
     confirmButtonText: '确定',
@@ -220,24 +235,17 @@ const handleClose = () => {
       ElMessage.info('操作取消')
     })
 }
+// 处理弹层取消事件
 const handleCancel = () => {
-  // 展示加载中效果
-  loading.value = true
   // 清空表单
-  formModel.value = {
-    id: '',
-    title: '',
-    content: '',
-    cover_img: '',
-    state: false,
-    article_category: 0 // 该id非documentId而是真实id
-  }
+  resetFormModel()
   // 重置操作类型
   oprationType.value = ''
+  // 清空预览
+  URL.revokeObjectURL(preImgUrl.value) // 清理 URL
+  preImgUrl.value = '' // 清除预览 URL
   // 关闭弹层
   showDrawer.value = false
-  // 关闭加载中效果
-  loading.value = false
 }
 
 // 预览图片的URL
@@ -271,17 +279,20 @@ const onSelectFIle = (file) => {
 
 // 移除文件后触发的事件
 const handleRemove = () => {
-  // 清空预览
-  preImgUrl.value = ''
+  URL.revokeObjectURL(preImgUrl.value) // 清理 URL
+  preImgUrl.value = '' // 清除预览 URL
 }
 
 // 新增文章的响应事件
 const onAddArticle = () => {
   // 设置操作类型
   oprationType.value = 'add'
+  // 直接先重置一遍 formModel 的内容
+  resetFormModel()
+  // console.log('新增文章弹层被触发，表单内容为：', formModel.value)
   // 查询store是否有草稿存在
   const draft = useStore.getArticleDraft()
-  // console.log(draft)
+  // 如果draft为空
   if (draft) {
     // 存在草稿，将草稿内容渲染到表单上
     formModel.value = {
@@ -289,19 +300,11 @@ const onAddArticle = () => {
       content: draft.content,
       cover_img: draft.cover_img,
       state: false,
-      article_category: draft.article_category.id // 该id非documentId而是真实id
+      article_category: draft.article_category // 该id非documentId而是真实id
     }
-    // 设置预览图
-    preImgUrl.value = baseUploadUrl + draft.cover_img
   } else {
     // 没有草稿直接重置表单
-    formModel.value = {
-      title: '',
-      content: '',
-      cover_img: '',
-      state: false,
-      article_category: null // 该id非documentId而是真实id
-    }
+    resetFormModel()
     // 设置预览图
     preImgUrl.value = ''
   }
@@ -351,16 +354,9 @@ const handleSubmit = async () => {
     ElMessage.error('当前操作异常！')
   }
   // 关闭弹层
-  showDrawer.value = false
+  handleCancel()
   // 重置表单
-  formModel.value = {
-    id: '',
-    title: '',
-    content: '',
-    cover_img: '',
-    state: false,
-    article_category: 0 // 该id非documentId而是真实id
-  }
+  resetFormModel()
   // 重置操作类型
   oprationType.value = ''
   // 关闭加载中效果
@@ -378,10 +374,9 @@ const handleSubmit = async () => {
 // 走保存草稿的响应事件
 const handleSaveDraft = () => {
   // 获取表单数据
-  // console.log('保存草稿：', formModel.value)
   useStore.setArticleDraft(formModel.value)
   // 关闭弹层
-  showDrawer.value = false
+  handleCancel()
   // 给予提示
   ElNotification({
     title: 'Success',
@@ -397,7 +392,7 @@ const handleClearDraft = () => {
   // 调用store中的方法清除草稿
   useStore.clearArticleDraft()
   // 关闭弹层
-  showDrawer.value = false
+  handleCancel()
   // 关闭加载中效果
   loading.value = false
   // 给予提示
@@ -472,14 +467,14 @@ const handleClearDraft = () => {
           >
         </template>
       </el-table-column>
-      <el-table-column label="封面" width="270">
+      <el-table-column label="封面">
         <template #default="scope">
           <div style="display: flex; align-items: center">
             <!-- scope.row.cover_img.url 是文章中的封面图片 URL -->
             <el-image
-              v-if="scope.row.cover_img && scope.row.cover_img.url"
-              :src="`${baseUploadUrl}${scope.row.cover_img.url}`"
-              :preview-src-list="[`${baseUploadUrl}${scope.row.cover_img.url}`]"
+              v-if="scope.row.cover_img"
+              :src="`${scope.row.cover_img}`"
+              :preview-src-list="[`${scope.row.cover_img}`]"
               style="width: auto; height: 30px; cursor: pointer"
               fit="cover"
               @click.stop
@@ -515,12 +510,9 @@ const handleClearDraft = () => {
           </div>
         </template>
       </el-table-column>
-      <el-table-column
-        label="分类"
-        prop="article_category.category_name"
-        width="300"
-      ></el-table-column>
+      <el-table-column label="分类" prop="article_category.category_name"></el-table-column>
       <el-table-column label="发表时间" prop="createdAt"></el-table-column>
+      <el-table-column label="更新时间" prop="updatedAt"></el-table-column>
       <el-table-column label="状态" prop="state"></el-table-column>
       <el-table-column label="操作" width="100">
         <template #default="{ row }">
@@ -619,12 +611,7 @@ const handleClearDraft = () => {
             </el-form-item>
             <el-form-item label="文章内容" prop="content">
               <div class="editor">
-                <quill-editor
-                  theme="snow"
-                  v-model:content="formModel.content"
-                  toolbar="full"
-                  contentType="html"
-                ></quill-editor>
+                <richEditor v-model="formModel.content"></richEditor>
               </div>
             </el-form-item>
           </el-form>
@@ -633,10 +620,10 @@ const handleClearDraft = () => {
       <!-- 定义footer -->
       <template #footer>
         <div style="flex: auto">
-          <el-button v-if="oprationType === 'add'" type="default" @click="handleClearDraft()"
+          <el-button v-if="oprationType === 'add'" type="danger" @click="handleClearDraft()"
             >清除草稿</el-button
           >
-          <el-button v-if="oprationType === 'add'" type="default" @click="handleSaveDraft()"
+          <el-button v-if="oprationType === 'add'" type="info" @click="handleSaveDraft()"
             >保存草稿</el-button
           >
           <el-button type="primary" @click="handleSubmit()">发布文章</el-button>
@@ -680,6 +667,6 @@ const handleClearDraft = () => {
 
 .editor {
   width: 100%;
-  height: 300px;
+  height: 200px;
 }
 </style>
