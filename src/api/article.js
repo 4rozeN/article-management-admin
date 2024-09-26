@@ -35,13 +35,6 @@ export const deleteArticleCategoryByIdService = (id) => {
   return request.delete(`/api/article-categories/${id}`)
 }
 
-// 获取文章列表
-export const useArticleService = () => {
-  return request.get(
-    '/api/articles?fields=documentId,title,content,state,createdAt,updatedAt,publishedAt&populate[cover_img][fields]=documentId,name,alternativeText,caption,width,height,ext,mime,url,createdAt,updatedAt&populate[article_category][fields]=documentId,category_name,category_alias,createdAt,updatedAt'
-  )
-}
-
 // 获取某文章详情
 export const useArticleByIdService = (id) => {
   return request.get(
@@ -49,12 +42,37 @@ export const useArticleByIdService = (id) => {
   )
 }
 
-// 条件查询文章列表，支持传入包含id和state字段的obj对象
-export const useArticleByConditionService = (conditionObj) => {
-  const { id, state } = conditionObj // 从 condition 中解构出 id 和 state 字段
-  return request.get(
-    `/api/articles?filters[article_category][id][$eq]=${id}&filters[state][$eq]=${state}&populate=*`
-  )
+// 优化后的分页和条件查询函数，支持分页、条件、模糊查询
+export const useArticleService = (page, limit, conditionObj = {}, keyword = '') => {
+  let query = `/api/articles?pagination[page]=${page}&pagination[pageSize]=${limit}`
+
+  // 模糊查询：如果有 keyword，则添加模糊查询条件
+  if (keyword) {
+    query += `&filters[title][$contains]=${keyword}`
+  }
+
+  // 条件查询：如果传入了 conditionObj，解析其中的 id 和 state
+  if (conditionObj) {
+    const { id, state } = conditionObj
+
+    // 动态拼接 id 条件
+    if (typeof id === 'number') {
+      query += `&filters[article_category][id][$eq]=${id}`
+    }
+
+    // 动态拼接 state 条件
+    if (state === 'true' || state === 'false') {
+      query += `&filters[state][$eq]=${state}`
+    }
+  }
+
+  // 加入 fields 和 populate 参数，获取所需字段及关联数据
+  query += `&fields=documentId,title,content,state,createdAt,updatedAt,publishedAt`
+  query += `&populate[cover_img][fields]=documentId,name,alternativeText,caption,width,height,ext,mime,url,createdAt,updatedAt`
+  query += `&populate[article_category][fields]=documentId,category_name,category_alias,createdAt,updatedAt`
+
+  // 发起请求
+  return request.get(query)
 }
 
 // 创建新文章

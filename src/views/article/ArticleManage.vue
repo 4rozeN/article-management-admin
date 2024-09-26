@@ -3,12 +3,11 @@ import { Delete, Edit, Plus, Link } from '@element-plus/icons-vue'
 import { ref, onMounted } from 'vue'
 import { useUploadService } from '@/api/upload'
 import {
-  useArticleService,
+  useArticleService, // 新接口
   useArticleCategoryService,
   updateArticleByIdService,
   deleteArticleByIdService,
-  addArticleService,
-  useArticleByConditionService
+  addArticleService
 } from '@/api/article'
 import dayjs from 'dayjs' // 导入dayjs格式化日期
 import { QuillEditor } from '@vueup/vue-quill'
@@ -33,10 +32,21 @@ const direction = ref('rtl')
 const loading = ref(false)
 const form = ref(null) // 定义form用于接收模板引用进行表单提交预校验
 const srcList = ref([]) // 定义图片预览列表
-// 获取文章列表
-const getArticleList = async () => {
-  const res = await useArticleService()
+const disabled = ref(false) // 定义disabled用于控制分页禁用状态
+const currentPage = ref(1) // 定义当前页数
+const pageSize = ref(10) // 定义每页显示的数量
+const pageCount = ref(30) // 定义总页数
+const totalCount = ref(30) // 定义总数据条目数
+// 获取文章列表，支持分页、条件查询和模糊查询
+const getArticleList = async (page, pageSize, conditionObj = {}, keyword = '') => {
+  const res = await useArticleService(page, pageSize, conditionObj, keyword) // 使用新接口
+  console.log('查询结果:', res)
+
+  currentPage.value = res.data.meta.pagination.page
+  pageCount.value = res.data.meta.pagination.pageCount
+  totalCount.value = res.data.meta.pagination.total
   articleList.value = res.data.data
+
   // 格式化日期
   articleList.value.forEach((item) => {
     item.createdAt = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
@@ -45,17 +55,12 @@ const getArticleList = async () => {
   articleList.value.forEach((item) => {
     item.state = item.state ? '已发布' : '草稿'
   })
-  // 将文章列表遍历，将封面图列表赋值给srcList
+  // 更新封面图片列表
   srcList.value = articleList.value.map((item) => {
-    if (item.cover_img) {
-      return baseUploadUrl + item.cover_img.url
-    } else {
-      return ''
-    }
+    return item.cover_img ? baseUploadUrl + item.cover_img.url : ''
   })
-  console.log('articleList.value', articleList.value)
-  console.log('srcList', srcList.value)
 }
+
 // 获取分类列表
 const getArticleCategoryList = async () => {
   const res = await useArticleCategoryService()
@@ -63,45 +68,56 @@ const getArticleCategoryList = async () => {
   // console.log('getArticleCategoryList', articleCategoryList.value)
 }
 onMounted(async () => {
-  await getArticleList()
+  await getArticleList(1, 10)
   await getArticleCategoryList()
 })
+
+// 页面展示数据数量变化响应函数
+const handleSizeChange = async (size) => {
+  pageSize.value = size
+  await getArticleList(currentPage.value, size, currentCondition.value) // 使用当前条件
+}
+
+// 当前页码变化响应函数
+const handleCurrentChange = async (page) => {
+  currentPage.value = page
+  await getArticleList(page, pageSize.value, currentCondition.value) // 使用当前条件
+}
 
 // 定义条件查询的项目
 const categoryRow = ref('')
 const stateRow = ref('')
+// 当前的查询条件
+const currentCondition = ref({
+  id: null,
+  state: null
+})
+
 // 条件查询的响应事件
 const handleQuery = async () => {
-  console.log('条件查询：', categoryRow.value, stateRow.value)
-  // 构建条件对象
   const conditionObj = {
-    id: categoryRow.value,
-    state: stateRow.value
+    id: categoryRow.value || null, // 分类ID
+    state: stateRow.value || null // 文章状态
   }
-  // 调用接口
-  await useArticleByConditionService(conditionObj)
-    .then((res) => {
-      articleList.value = res.data.data
-      // 格式化日期
-      articleList.value.forEach((item) => {
-        item.createdAt = dayjs(item.createdAt).format('YYYY-MM-DD HH:mm:ss')
-      })
-      // 处理state显示，true为已发布；false为草稿
-      articleList.value.forEach((item) => {
-        item.state = item.state ? '已发布' : '草稿'
-      })
+
+  currentCondition.value = conditionObj // 保存当前条件
+
+  loading.value = true
+  await getArticleList(currentPage.value, pageSize.value, conditionObj)
+    .then(() => {
+      loading.value = false
     })
     .catch((err) => {
-      ElMessage.error('条件查询失败：' + err)
+      ElMessage.error('查询失败：' + err)
     })
 }
 
 // 条件查询重置按钮的响应事件
-const handleReset = () => {
+const handleReset = async () => {
   categoryRow.value = ''
   stateRow.value = ''
-  // 重新拉取文章列表
-  getArticleList()
+  currentCondition.value = { id: null, state: null } // 重置条件
+  await getArticleList(currentPage.value, pageSize.value) // 重新拉取文章列表
   ElNotification({
     title: 'Success',
     message: '重置成功',
@@ -112,7 +128,7 @@ const handleReset = () => {
 
 // 编辑文章的响应事件
 const onEditArticle = (row) => {
-  console.log('row', row)
+  // console.log('row', row)
   // 设置操作类型
   oprationType.value = 'edit'
   // 将文章数据渲染到表格上
@@ -138,7 +154,7 @@ const onEditArticle = (row) => {
 }
 // 删除文章的响应事件
 const onDeleteArticle = (row) => {
-  console.log(row)
+  // console.log(row)
   deleteArticleByIdService(row.documentId)
   ElMessageBox.confirm('确定要删除该文章吗？', '提示', {
     confirmButtonText: '确定',
@@ -146,9 +162,9 @@ const onDeleteArticle = (row) => {
     type: 'warning'
   })
   // 重新拉取文章列表
-  getArticleList()
+  getArticleList(currentPage.value, pageSize.value)
 }
-
+// 表单校验
 const rules = {
   title: [
     { required: true, message: '请输入文章标题', trigger: 'blur' },
@@ -217,7 +233,7 @@ const beforeImgUpload = (rawFile) => {
 }
 // 选择文件后触发的事件
 const onSelectFIle = (file) => {
-  console.log('选择了文件：', file)
+  // console.log('选择了文件：', file)
   // 生成本地预览 URL
   preImgUrl.value = URL.createObjectURL(file.raw)
   // 存入表单
@@ -236,7 +252,7 @@ const onAddArticle = () => {
   oprationType.value = 'add'
   // 查询store是否有草稿存在
   const draft = useStore.getArticleDraft()
-  console.log(draft)
+  // console.log(draft)
   if (draft) {
     // 存在草稿，将草稿内容渲染到表单上
     formModel.value = {
@@ -271,19 +287,19 @@ const handleSubmit = async () => {
   // 表单校验
   await form.value.validate()
   // 打印表单数据
-  console.log('表单数据：', formModel.value)
+  // console.log('表单数据：', formModel.value)
   // 判断是否有封面图
   if (preImgUrl.value) {
     // 判断是否是url地址，如果是，则说明没有被更改过，直接提交无需上传
     if (!preImgUrl.value.startsWith('http')) {
-      console.log('提交-当前封面被更换为本地图片')
+      // console.log('提交-当前封面被更换为本地图片')
       // 上传封面图
       const uploadRes = await useUploadService(formModel.value.cover_img)
       // 将上传后的图片id赋值给formModel.value.cover_img
-      console.log('上传后的图片：', uploadRes)
+      // console.log('上传后的图片：', uploadRes)
       formModel.value.cover_img = uploadRes.data[0].id
     } else {
-      console.log('没有更改封面图')
+      // console.log('没有更改封面图')
       // 说明没有被更改过，将表单中的cover_img删除掉
       delete formModel.value.cover_img
     }
@@ -294,11 +310,11 @@ const handleSubmit = async () => {
   // 判断操作类型
   if (oprationType.value === 'add') {
     // 新增文章
-    console.log('提交表单数据：', formModel.value)
+    // console.log('提交表单数据：', formModel.value)
     await addArticleService(formModel.value)
     ElMessage.success('文章发布成功！')
   } else if (oprationType.value === 'edit') {
-    console.log('提交表单数据：', formModel.value)
+    // console.log('提交表单数据：', formModel.value)
     await updateArticleByIdService(formModel.value.id, formModel.value)
     ElMessage.success('文章修改成功！')
   } else {
@@ -321,7 +337,7 @@ const handleSubmit = async () => {
   // 关闭加载中效果
   loading.value = false
   // 重新拉取文章列表
-  await getArticleList()
+  await getArticleList(currentPage.value, pageSize.value)
   // 给予提示
   ElNotification({
     title: 'Success',
@@ -333,7 +349,7 @@ const handleSubmit = async () => {
 // 走保存草稿的响应事件
 const handleSaveDraft = () => {
   // 获取表单数据
-  console.log('保存草稿：', formModel.value)
+  // console.log('保存草稿：', formModel.value)
   useStore.setArticleDraft(formModel.value)
   // 关闭弹层
   showDrawer.value = false
@@ -405,21 +421,22 @@ const handleClearDraft = () => {
     </el-form>
     <!-- 定义主体表格内容 -->
     <el-table v-loading="loading" :data="articleList" style="width: 100%">
-      <el-table-column label="文章标题" width="400">
+      <el-table-column label="文章标题" width="350" :show-overflow-tooltip="true">
         <template #default="{ row }">
           <el-link type="primary" :underline="false" @click="$router.push('/article/preview/${id}')"
             ><el-icon> <Link /> </el-icon>{{ row.title }}</el-link
           >
         </template>
       </el-table-column>
-      <el-table-column label="封面" width="180">
+      <el-table-column label="封面" width="270">
         <template #default="scope">
           <div style="display: flex; align-items: center">
             <!-- scope.row.cover_img.url 是文章中的封面图片 URL -->
             <el-image
+              v-if="scope.row.cover_img && scope.row.cover_img.url"
               :src="`${baseUploadUrl}${scope.row.cover_img.url}`"
               :preview-src-list="[`${baseUploadUrl}${scope.row.cover_img.url}`]"
-              style="width: 100px; height: auto; cursor: pointer"
+              style="width: auto; height: 30px; cursor: pointer"
               fit="cover"
               @click.stop
               :preview-teleported="true"
@@ -439,10 +456,26 @@ const handleClearDraft = () => {
                 </div>
               </template>
             </el-image>
+            <div
+              v-else
+              style="
+                width: auto;
+                height: 30px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+              "
+            >
+              <span>暂无图片</span>
+            </div>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="分类" prop="article_category.category_name"></el-table-column>
+      <el-table-column
+        label="分类"
+        prop="article_category.category_name"
+        width="300"
+      ></el-table-column>
       <el-table-column label="发表时间" prop="createdAt"></el-table-column>
       <el-table-column label="状态" prop="state"></el-table-column>
       <el-table-column label="操作" width="100">
@@ -467,6 +500,21 @@ const handleClearDraft = () => {
         <el-empty description="没有数据" />
       </template>
     </el-table>
+    <!-- 分页组件 -->
+    <div class="pagination">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20]"
+        :size="'default'"
+        :disabled="disabled"
+        :background="true"
+        layout="sizes, prev, pager, next"
+        :total="totalCount"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
     <!-- 定义弹层 -->
     <el-drawer
       v-model="showDrawer"
@@ -489,7 +537,7 @@ const handleClearDraft = () => {
             style="padding-right: 30px"
           >
             <el-form-item label="标题" prop="title">
-              <el-input v-model="formModel.title" minlength="1" maxlength="10"></el-input>
+              <el-input v-model="formModel.title" minlength="1" maxlength="20"></el-input>
             </el-form-item>
             <el-form-item label="文章分类" prop="article_category">
               <el-select

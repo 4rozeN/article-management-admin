@@ -1,3 +1,3 @@
 <template>
-  <div>我是文章预览页面</div>
+  <page-container title="文章预览"></page-container>
 </template>

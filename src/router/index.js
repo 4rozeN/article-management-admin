@@ -31,6 +31,11 @@ const router = createRouter({
           component: () => import('@/views/article/ArticleChannel.vue')
         },
         {
+          path: 'article/preview/:id',
+          name: 'ArticlePreview',
+          component: () => import('@/views/article/ArticlePreview.vue')
+        },
+        {
           path: '/user/profile',
           name: 'UserProfile',
           component: () => import('@/views/user/UserProfile.vue')
