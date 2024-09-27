@@ -12,6 +12,8 @@
 >
 > 接口测试工具：Apifox2.6.17
 >
+> 接口文档地址：[article-management-admin](https://apifox.com/apidoc/shared-d12c85d1-97c0-43ca-8d64-6f61ca407910/doc-5195151)
+>
 > 系统：Windows11
 
 # 这是一个什么项目？

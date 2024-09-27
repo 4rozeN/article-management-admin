@@ -7,6 +7,7 @@
 > **Frontend Tech Stack**: Vue 3, Vite, Pinia, Element-Plus, Sass, WangEditor, Vue CropperJS, Day.js, etc.
 > **Backend**: Strapi 5, MySQL 8 
 > **API Testing Tool**: Apifox 2.6.17 
+> API document address: [article-management-admin](https://apifox.com/apidoc/shared-d12c85d1-97c0-43ca-8d64-6f61ca407910/doc-5195151)
 > **System**: Windows 11 
 
 # What is this article-management anyway?
