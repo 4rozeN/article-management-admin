@@ -23,6 +23,7 @@
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^4.0.2",
     "quill": "2.0.2",
+    "serve": "^14.2.3",
     "vue": "^3.4.29",
     "vue-cropper": "^1.1.4",
     "vue-cropperjs": "^5.0.0",

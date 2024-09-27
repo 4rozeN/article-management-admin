@@ -200,14 +200,21 @@ const onEditArticle = (row) => {
 // 删除文章的响应事件
 const onDeleteArticle = (row) => {
   // console.log(row)
-  deleteArticleByIdService(row.documentId)
   ElMessageBox.confirm('确定要删除该文章吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
-  // 重新拉取文章列表
-  getArticleList(currentPage.value, pageSize.value)
+    .then(async () => {
+      // 点击确定
+      await deleteArticleByIdService(row.documentId)
+      // 重新拉取文章列表
+      await getArticleList(currentPage.value, pageSize.value)
+    })
+    .catch(() => {
+      // 点击取消
+      ElMessage.info('操作取消')
+    })
 }
 // 表单校验
 const rules = {
@@ -573,7 +580,7 @@ const onClickTitle = (row) => {
       :size="'50%'"
     >
       <template #header>
-        <h4>当前操作为：{{ formModel.title ? '编辑或预览文章' : '新增文章' }}</h4>
+        <h4>当前操作为：{{ oprationType !== 'add' ? '编辑或预览文章' : '新增文章' }}</h4>
       </template>
       <template #default>
         <!-- 定义内容 -->

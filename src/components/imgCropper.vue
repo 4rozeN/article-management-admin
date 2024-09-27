@@ -167,9 +167,7 @@ const userAvatarUpdate = async (res) => {
   // console.log('用户信息：', userInfo.value.data.id)
   await userProfileUpdateService(userInfo.value.data.id, dataObj)
     .then(() => {
-      ElMessage.success('头像更新成功！')
-      // 刷新页面
-      location.reload()
+      ElMessage.success('头像更新成功！请刷新页面查看')
     })
     .catch((err) => {
       ElMessage.error('头像更新失败！error: ', err)

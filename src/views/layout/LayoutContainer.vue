@@ -12,7 +12,7 @@ import {
 import { onMounted, ref } from 'vue'
 import { userGetProfileService } from '@/api/user'
 import avatar from '@/assets/avatar.jpg'
-import { useUserJwtStore } from '@/stores'
+import { useUserJwtStore, useArticleStore } from '@/stores'
 import { useRouter } from 'vue-router'
 const user = ref({})
 const imgUrl = ref('')
@@ -25,6 +25,7 @@ onMounted(async () => {
 })
 
 const router = useRouter()
+const useDraft = useArticleStore()
 const useStore = useUserJwtStore()
 const onCommand = async (command) => {
   if (command === 'logout') {
@@ -36,13 +37,15 @@ const onCommand = async (command) => {
       .then(() => {
         // 退出登录，清除jwt
         useStore.removeJwt()
+        // 清除草稿
+        useDraft.clearArticleDraft()
         // 进行提示
         ElMessage({
           type: 'success',
           message: '成功退出'
         })
         // 跳转登录页面
-        router.push('/')
+        router.push('/login')
       })
       .catch(() => {
         ElMessage({
