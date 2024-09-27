@@ -5,9 +5,13 @@
 `article-management-admin` is an article management system built with Vue 3 and Strapi 5. It includes key features like user registration and login, article categorization, article management and preview, user avatar updates, and more. 🚀📝
 
 > **Frontend Tech Stack**: Vue 3, Vite, Pinia, Element-Plus, Sass, WangEditor, Vue CropperJS, Day.js, etc.
+>
 > **Backend**: Strapi 5, MySQL 8 
+>
 > **API Testing Tool**: Apifox 2.6.17 
+>
 > API document address: [article-management-admin](https://apifox.com/apidoc/shared-d12c85d1-97c0-43ca-8d64-6f61ca407910/doc-5195151)
+>
 > **System**: Windows 11 
 
 # What is this article-management anyway?
