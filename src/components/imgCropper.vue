@@ -213,15 +213,16 @@ const realTime = (data) => {
   previewsStyle.value = {
     width: data.w + 'px',
     height: data.h + 'px',
-    margin: 0,
+    margin: 'auto',
     overflow: 'hidden',
     zoom: tempScale.value,
     position: 'relative',
     border: '1px solid #ccc',
-    'border-radius': '2px'
+    borderRadius: '50%',
+    textAlign: 'center'
   }
+  // console.log(data)
 }
-
 // 提供方法对Blob进行类型和大小校验
 const validateBlob = (blob) => {
   const allowedTypes = props.allowTypeList // 允许的文件类型
