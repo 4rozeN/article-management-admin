@@ -84,7 +84,19 @@ const onSelectFIle = (file) => {
   imgNeedUpload.value = file.raw
   // console.log('生成原图图片：', originImgUrl.value)
 }
-
+// 提供函数清空预览和裁剪区
+const clearAll = () => {
+  // 清空图片
+  imgNeedUpload.value = null
+  croppingImgUrl.value = null
+  originImgUrl.value = null
+  // 先清空之前的预览图片
+  if (originImgUrl.value) {
+    URL.revokeObjectURL(originImgUrl.value)
+  }
+  // 重置状态
+  noCropper.value = true
+}
 // 定义变量拿到用户信息
 const imgId = ref('')
 const userInfo = ref({})
@@ -102,6 +114,7 @@ const uploadAvatar = async () => {
           .then(async (res) => {
             await userAvatarUpdate(res)
             ElMessage.success('头像上传成功！')
+            clearAll()
           })
           .catch((err) => {
             ElMessage.error('头像上传失败！error: ', err)
@@ -111,46 +124,40 @@ const uploadAvatar = async () => {
         // 放弃上传
         return
       })
-  }
-
-  if (!imgNeedUpload.value) {
-    ElMessage.error('请先选择需要上传的图片！')
-  }
-
-  if (props.uploadFileType.toLocaleLowerCase() === 'base64') {
-    // 校验Base64
-    validateBase64(imgNeedUpload.value)
-    // 上传头像
-    await useUploadService(imgNeedUpload.value, 'base64fileImg')
-      .then(async (res) => {
-        await userAvatarUpdate(res)
-        ElMessage.success('头像上传成功！')
-      })
-      .catch((err) => {
-        ElMessage.error('头像上传失败！error: ', err)
-      })
-  } else if (props.uploadFileType.toLocaleLowerCase() === 'blob') {
-    validateBlob(imgNeedUpload.value)
-    // 上传头像
-    await useUploadService(imgNeedUpload.value)
-      .then(async (res) => {
-        await userAvatarUpdate(res)
-        ElMessage.success('头像上传成功！')
-      })
-      .catch((err) => {
-        ElMessage.error('头像上传失败！error: ', err)
-      })
   } else {
-    ElMessage.error('上传裁剪文件出错！请检查裁剪结果类型！')
-    return
-  }
-  // 清空图片
-  imgNeedUpload.value = null
-  croppingImgUrl.value = null
-  originImgUrl.value = null
-  // 先清空之前的预览图片
-  if (originImgUrl.value) {
-    URL.revokeObjectURL(originImgUrl.value)
+    if (!imgNeedUpload.value) {
+      ElMessage.error('请先选择需要上传的图片！')
+    }
+
+    if (props.uploadFileType.toLocaleLowerCase() === 'base64') {
+      // 校验Base64
+      validateBase64(imgNeedUpload.value)
+      // 上传头像
+      await useUploadService(imgNeedUpload.value, 'base64fileImg')
+        .then(async (res) => {
+          await userAvatarUpdate(res)
+          ElMessage.success('头像上传成功！')
+          clearAll()
+        })
+        .catch((err) => {
+          ElMessage.error('头像上传失败！error: ', err)
+        })
+    } else if (props.uploadFileType.toLocaleLowerCase() === 'blob') {
+      validateBlob(imgNeedUpload.value)
+      // 上传头像
+      await useUploadService(imgNeedUpload.value)
+        .then(async (res) => {
+          await userAvatarUpdate(res)
+          ElMessage.success('头像上传成功！')
+          clearAll()
+        })
+        .catch((err) => {
+          ElMessage.error('头像上传失败！error: ', err)
+        })
+    } else {
+      ElMessage.error('上传裁剪文件出错！请检查裁剪结果类型！')
+      return
+    }
   }
 }
 // 提供方法在头像上传后更新用户头像

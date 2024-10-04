@@ -3,12 +3,9 @@ import { useUserJwtStore } from '@/stores'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
-// const baseURL = 'http://big-event-vue-api-t.itheima.net'
-const baseURL = 'http://localhost:1337'
-
 // axios.create创建一个实例
 const instance = axios.create({
-  baseURL,
+  baseURL: import.meta.env.VITE_BASE_URL, // 根据打包命令动态使用
   timeout: 60000
 })
 
@@ -23,13 +20,6 @@ instance.interceptors.request.use(
       config.headers.Authorization = 'Bearer ' + useJwt.sessionJwt
     }
     return config
-
-    // 以下为token模式
-    // const useToken = useUserStore()
-    // if (useToken.token) {
-    //   config.headers.Authorization = useToken.token
-    // }
-    // return config
   },
   (err) => Promise.reject(err)
 )
@@ -46,15 +36,6 @@ instance.interceptors.response.use(
     }
     // 业务正常返回
     return res
-
-    // 以下为token模式
-    // // 处理业务响应
-    // if (res.data.code === 0) {
-    //   return res
-    // }
-    // // 业务失败给予提示
-    // ElMessage.error(res.data.message || '服务异常')
-    // return Promise.reject(res.data)
   },
   (err) => {
     // 以下为jwt模式
@@ -66,15 +47,6 @@ instance.interceptors.response.use(
     // 处理请求响应失败的默认情况
     ElMessage.error(err.response.data.error.message || '服务异常')
     return Promise.reject(err)
-
-    // 以下为token模式
-    // // 处理请求中401无权限或token失效情况
-    // if (err.response && err.response.status === 401) {
-    //   router.push('/login')
-    // }
-    // // 处理请求响应失败的默认情况
-    // ElMessage.error(err.response.data.message || '服务异常')
-    // return Promise.reject(err)
   }
 )
 
