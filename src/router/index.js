@@ -1,8 +1,9 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { useUserJwtStore } from '@/stores'
 import { ElMessage } from 'element-plus'
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // history: createWebHistory('/demo'),
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/login',

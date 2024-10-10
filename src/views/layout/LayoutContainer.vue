@@ -162,7 +162,7 @@ const onCommand = async (command) => {
 
     &__logo {
       height: 120px;
-      background: url('@/assets/login_title.png') no-repeat center / 120px auto;
+      background: url('../../assets/login_title.png') no-repeat center / 120px auto;
     }
 
     .el-menu {

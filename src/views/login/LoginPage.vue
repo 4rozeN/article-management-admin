@@ -202,8 +202,8 @@ watch(isRegister, () => {
 
   .bg {
     background:
-      url('@/assets/login_title.png') no-repeat 60% center / 240px auto,
-      url('@/assets/login_bg.jpg') no-repeat center / cover;
+      url('../../assets/login_title.png') no-repeat 60% center / 240px auto,
+      url('../../assets/login_bg.jpg') no-repeat center / cover;
     border-radius: 0 20px 20px 0;
   }
 
