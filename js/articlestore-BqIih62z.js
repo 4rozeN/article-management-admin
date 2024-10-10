@@ -1,0 +1,1 @@
+import{aZ as e,r as a}from"./index-C0GVfFZJ.js";const f=e("article-draft",()=>{const t=a("");return{articleDraft:t,setArticleDraft:r=>{t.value=r},getArticleDraft:()=>t.value,clearArticleDraft:()=>{t.value=""}}},{persist:!0});export{f as u};
